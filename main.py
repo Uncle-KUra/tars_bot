@@ -86,7 +86,7 @@ async def in_command(ctx, level: int):
         await ctx.send('{} already in queue for rs{}'.format(display_name, level))
 
 
-@bot.command()
+@bot.command(name='out')
 async def out(ctx, *args):
     display_name = ctx.author.display_name
     uid = ctx.author.id
@@ -111,7 +111,12 @@ async def out(ctx, *args):
         await ctx.send('Cannot parse command from {}'.format(display_name))
 
 
-if __name__ == '__main__':
+@bot.command(name='o')
+async def out2(ctx, *args):
+    await out(ctx, *args)
+
+
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=argparse.FileType('rt'), required=True)
     parser.add_argument('--prod', action='store_true', default=False)
@@ -121,3 +126,7 @@ if __name__ == '__main__':
         bot.run(config['token'])
     else:
         bot.run(config['test_token'])
+
+
+if __name__ == '__main__':
+    main()
