@@ -1,0 +1,5 @@
+{
+  "token": "<prod_token>",
+  "test_token": "<test_token>",
+  "test": true
+}
