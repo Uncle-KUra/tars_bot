@@ -48,7 +48,10 @@ def update_user_data(ctx):
 
 def clear_user_from_queue(uid):
     for que in queue.values():
-        que.remove(uid)
+        try:
+            que.remove(uid)
+        except ValueError:
+            pass
 
 
 def generate_start_text(level):
@@ -84,17 +87,28 @@ async def in_command(ctx, level: int):
 
 
 @bot.command()
-async def out(ctx, level: int):
+async def out(ctx, *args):
     display_name = ctx.author.display_name
     uid = ctx.author.id
+    print('?in', uid, display_name, '|'.join(args))
 
-    print('?in', uid, display_name, level)
-    if uid not in queue[level]:
-        await ctx.send('{} not in queue for rs{}'.format(display_name, level))
-    else:
-        queue[level].remove(uid)
-        await ctx.send('{} leaves queue for rs{}'.format(display_name, level))
+    if len(args) == 1:
+        try:
+            level = int(args[0])
+            if uid not in queue[level]:
+                await ctx.send('{} not in queue for rs{}'.format(display_name, level))
+            else:
+                queue[level].remove(uid)
+                await ctx.send('{} leaves queue for rs{}'.format(display_name, level))
+                await ctx.send(get_queue_list_text())
+        except ValueError:
+            await ctx.send('Cannot parse command from {}'.format(display_name))
+    elif len(args) == 0:
+        clear_user_from_queue(uid)
+        await ctx.send('{} leaves queue for every rs'.format(display_name))
         await ctx.send(get_queue_list_text())
+    else:
+        await ctx.send('Cannot parse command from {}'.format(display_name))
 
 
 if __name__ == '__main__':
