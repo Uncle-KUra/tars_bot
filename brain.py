@@ -41,6 +41,9 @@ class Brain:
             text = 'Empty queue'
         return text
 
+    def q_command(self):
+        yield self.get_queue_text()
+
     def in_command(self, user, level):
         if user.id not in self.queue[level]:
             self.queue[level].append(user.id)
