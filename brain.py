@@ -12,8 +12,8 @@ class Brain:
         text = 'Go-go-go! Rs{}\n'.format(level)
         mentions = []
         for queue_uid in list(self.queue[level]):
-            text += '\t{}\n'.format(self.user_storage[queue_uid].display_name)
-            mentions.append(self.user_storage[queue_uid].mention)
+            text += '\t{}\n'.format(self.user_storage.get_from_id(queue_uid).display_name)
+            mentions.append(self.user_storage.get_from_id(queue_uid).mention)
         text += ' '.join(mentions)
         return text
 
@@ -30,7 +30,7 @@ class Brain:
             if self.queue[level]:
                 text += 'Queue for rs{}\n'.format(level)
                 for uid in self.queue[level]:
-                    text += '\t{}\n'.format(self.user_storage[uid].diplay_name)
+                    text += '\t{}\n'.format(self.user_storage.get_from_id(uid).display_name)
         if not text:
             text = 'Empty queue'
         return text

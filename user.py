@@ -26,3 +26,6 @@ class UserStorage:
         user = self.users_data[uid]
         user.update(uid, display_name, mention)
         return user
+
+    def get_from_id(self, uid):
+        return self.users_data[uid]

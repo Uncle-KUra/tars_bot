@@ -16,22 +16,6 @@ user_storage = UserStorage()
 brain = Brain(user_storage)
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=argparse.FileType('rt'), required=True)
-    parser.add_argument('--prod', action='store_true', default=False)
-    args = parser.parse_args()
-    config = json.load(args.config)
-    if args.prod:
-        bot.run(config['token'])
-    else:
-        bot.run(config['test_token'])
-
-
-if __name__ == '__main__':
-    main()
-
-
 @bot.event
 async def on_ready():
     print('Logged in as')
@@ -40,7 +24,7 @@ async def on_ready():
     print('------')
 
 
-def handle_in(ctx, level):
+async def handle_in(ctx, level):
     display_name = ctx.author.display_name
     uid = ctx.author.id
 
@@ -54,15 +38,15 @@ def handle_in(ctx, level):
 
 @bot.command(name='in')
 async def in_command(ctx, level: int):
-    handle_in(ctx, level)
+    await handle_in(ctx, level)
 
 
 @bot.command(name='i')
 async def in_command(ctx, level: int):
-    handle_in(ctx, level)
+    await handle_in(ctx, level)
 
 
-def handle_out(ctx, args):
+async def handle_out(ctx, *args):
     display_name = ctx.author.display_name
     uid = ctx.author.id
     print('?in', uid, display_name, '|'.join(args))
@@ -85,9 +69,25 @@ def handle_out(ctx, args):
 
 @bot.command(name='out')
 async def out(ctx, *args):
-    handle_out(ctx, *args)
+    await handle_out(ctx, *args)
 
 
 @bot.command(name='o')
 async def out2(ctx, *args):
-    handle_out(ctx, *args)
+    await handle_out(ctx, *args)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', type=argparse.FileType('rt'), required=True)
+    parser.add_argument('--prod', action='store_true', default=False)
+    args = parser.parse_args()
+    config = json.load(args.config)
+    if args.prod:
+        bot.run(config['token'])
+    else:
+        bot.run(config['test_token'])
+
+
+if __name__ == '__main__':
+    main()
