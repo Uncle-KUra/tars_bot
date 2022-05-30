@@ -1,119 +1,19 @@
 #!/usr/bin/env python3
 
-import discord
 from discord.ext import commands
 
-from collections import defaultdict
 import argparse
 import json
 
-DISPLAY_NAME = 'display_name'
-MENTION = 'mention'
+from user import UserStorage
+from brain import Brain
 
 
 description = '''Stupid queue bot '''
 bot = commands.Bot(command_prefix='?', description=description)
 
-queue = defaultdict(list)
-users_data = dict()
-
-
-@bot.event
-async def on_ready():
-    print('Logged in as')
-    print(bot.user.name)
-    print(bot.user.id)
-    print('------')
-
-
-def get_queue_list_text():
-    text = ''
-    for level in queue:
-        if queue[level]:
-            text += 'Queue for rs{}\n'.format(level)
-            for uid in queue[level]:
-                text += '\t{}\n'.format(users_data[uid][DISPLAY_NAME])
-    if not text:
-        text = 'Empty queue'
-    return text
-
-
-def update_user_data(ctx):
-    uid = ctx.author.id
-    display_name = ctx.author.display_name
-    mention = ctx.author.mention
-    users_data[uid] = {DISPLAY_NAME: display_name,
-                       MENTION: mention}
-
-
-def clear_user_from_queue(uid):
-    for que in queue.values():
-        try:
-            que.remove(uid)
-        except ValueError:
-            pass
-
-
-def generate_start_text(level):
-    text = 'Go-go-go! Rs{}\n'.format(level)
-    mentions = []
-    for queue_uid in list(queue[level]):
-        text += '\t{}\n'.format(users_data[queue_uid][DISPLAY_NAME])
-        mentions.append(users_data[queue_uid][MENTION])
-    text += ' '.join(mentions)
-    return text
-
-
-@bot.command(name='in')
-async def in_command(ctx, level: int):
-    display_name = ctx.author.display_name
-    uid = ctx.author.id
-
-    print('?in', uid, display_name, level)
-
-    update_user_data(ctx)
-
-    if uid not in queue[level]:
-        queue[level].append(uid)
-        await ctx.send('{} enters queue for rs{}'.format(display_name, level))
-        if len(queue[level]) == 4 or level == 2 and len(queue[level]) == 2:
-            text = generate_start_text(level)
-            for queue_uid in list(queue[level]):
-                clear_user_from_queue(queue_uid)
-            await ctx.send(text)
-        await ctx.send(get_queue_list_text())
-    else:
-        await ctx.send('{} already in queue for rs{}'.format(display_name, level))
-
-
-@bot.command(name='out')
-async def out(ctx, *args):
-    display_name = ctx.author.display_name
-    uid = ctx.author.id
-    print('?in', uid, display_name, '|'.join(args))
-
-    if len(args) == 1:
-        try:
-            level = int(args[0])
-            if uid not in queue[level]:
-                await ctx.send('{} not in queue for rs{}'.format(display_name, level))
-            else:
-                queue[level].remove(uid)
-                await ctx.send('{} leaves queue for rs{}'.format(display_name, level))
-                await ctx.send(get_queue_list_text())
-        except ValueError:
-            await ctx.send('Cannot parse command from {}'.format(display_name))
-    elif len(args) == 0:
-        clear_user_from_queue(uid)
-        await ctx.send('{} leaves queue for every rs'.format(display_name))
-        await ctx.send(get_queue_list_text())
-    else:
-        await ctx.send('Cannot parse command from {}'.format(display_name))
-
-
-@bot.command(name='o')
-async def out2(ctx, *args):
-    await out(ctx, *args)
+user_storage = UserStorage()
+brain = Brain(user_storage)
 
 
 def main():
@@ -130,3 +30,64 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+@bot.event
+async def on_ready():
+    print('Logged in as')
+    print(bot.user.name)
+    print(bot.user.id)
+    print('------')
+
+
+def handle_in(ctx, level):
+    display_name = ctx.author.display_name
+    uid = ctx.author.id
+
+    print('?in', uid, display_name, level)
+
+    user = user_storage.get_user_from_ctx(ctx)
+
+    for text in brain.in_command(user, level):
+        await ctx.send(text)
+
+
+@bot.command(name='in')
+async def in_command(ctx, level: int):
+    handle_in(ctx, level)
+
+
+@bot.command(name='i')
+async def in_command(ctx, level: int):
+    handle_in(ctx, level)
+
+
+def handle_out(ctx, args):
+    display_name = ctx.author.display_name
+    uid = ctx.author.id
+    print('?in', uid, display_name, '|'.join(args))
+
+    user = user_storage.get_user_from_ctx(ctx)
+
+    if len(args) == 1:
+        try:
+            level = int(args[0])
+            for text in brain.out_command_level(user, level):
+                await ctx.send(text)
+        except ValueError:
+            await ctx.send('Cannot parse command from {}'.format(display_name))
+    elif len(args) == 0:
+        for text in brain.out_command_all(user):
+            await ctx.send(text)
+    else:
+        await ctx.send('Cannot parse command from {}'.format(display_name))
+
+
+@bot.command(name='out')
+async def out(ctx, *args):
+    handle_out(ctx, *args)
+
+
+@bot.command(name='o')
+async def out2(ctx, *args):
+    handle_out(ctx, *args)
