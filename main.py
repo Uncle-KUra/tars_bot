@@ -38,12 +38,12 @@ async def handle_in(ctx, level):
         await ctx.send(text)
 
 
-@bot.command(name='in')
+@bot.command(name='in', help='?in <level> - enter queue for red star <level>')
 async def in_command(ctx, level: int):
     await handle_in(ctx, level)
 
 
-@bot.command(name='i')
+@bot.command(name='i', help='?i <level> - enter queue for red star <level>')
 async def in_command(ctx, level: int):
     await handle_in(ctx, level)
 
@@ -69,12 +69,12 @@ async def handle_out(ctx, *args):
         await ctx.send('Cannot parse command from {}'.format(display_name))
 
 
-@bot.command(name='out')
+@bot.command(name='out', help='?out <level> - leave queue for red star <level>, no level = all queues')
 async def out(ctx, *args):
     await handle_out(ctx, *args)
 
 
-@bot.command(name='o')
+@bot.command(name='o', help='?o <level> - leave queue for red star <level>, no level = all queues')
 async def out2(ctx, *args):
     await handle_out(ctx, *args)
 
