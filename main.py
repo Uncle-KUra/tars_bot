@@ -7,13 +7,15 @@ import json
 
 from user import UserStorage
 from brain import Brain
+from text_db import DB
 
 
 description = '''Stupid queue bot '''
 bot = commands.Bot(command_prefix='?', description=description)
 
-user_storage = UserStorage()
-brain = Brain(user_storage)
+db = None
+user_storage = None
+brain = None
 
 
 @bot.event
@@ -78,11 +80,17 @@ async def out2(ctx, *args):
 
 
 def main():
+    global db, user_storage, brain
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=argparse.FileType('rt'), required=True)
     parser.add_argument('--prod', action='store_true', default=False)
     args = parser.parse_args()
     config = json.load(args.config)
+
+    db = DB(config['db_file_name'])
+    user_storage = UserStorage(db)
+    brain = Brain(user_storage, db)
+
     if args.prod:
         bot.run(config['token'])
     else:
