@@ -69,14 +69,34 @@ async def handle_out(ctx, *args):
         await ctx.send('Cannot parse command from {}'.format(display_name))
 
 
-@bot.command(name='out', help='?out <level> - leave queue for red star <level>, no level = all queues')
+@bot.command(name='out', help='?out <level> - leave queue for <level>, no level = all queues')
 async def out(ctx, *args):
     await handle_out(ctx, *args)
 
 
-@bot.command(name='o', help='?o <level> - leave queue for red star <level>, no level = all queues')
+@bot.command(name='o', help='?o <level> - leave queue for <level>, no level = all queues')
 async def out2(ctx, *args):
     await handle_out(ctx, *args)
+
+
+async def handle_q(ctx):
+    for text in brain.q_command():
+        await ctx.send(text)
+
+
+@bot.command(name='q', help='?q - status of queues')
+async def q_command(ctx):
+    await handle_q(ctx)
+
+
+@bot.command(name='queue', help='?queue - status of queues')
+async def queue_command(ctx):
+    await handle_q(ctx)
+
+
+@bot.command(name='status', help='?status - status of queues')
+async def status_command(ctx):
+    await handle_q(ctx)
 
 
 def main():
