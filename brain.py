@@ -7,15 +7,22 @@ class Brain:
     def __init__(self, user_storage, db):
         self.queue = defaultdict(list)
         for key, value in db.get_collection('queue'):
-            self.queue[int(key)] = list(value)
+            if len(key) == 1:
+                key = '{key} {simple}'
+            self.queue[key] = list(value)
         self.user_storage = user_storage
         self.db = db
 
-    def generate_start_text(self, level):
-        text = 'Go-go-go! Rs{}\n'.format(level)
+    @staticmethod
+    def build_key(level, spec):
+        return f'{level} {spec if spec else "simple"}'
+
+    def generate_start_text(self, level, spec):
+        text = f'Go-go-go! Red Star {level} {spec}\n'
         mentions = []
-        for queue_uid in list(self.queue[level]):
-            text += '\t{}\n'.format(self.user_storage.get_from_id(queue_uid).display_name)
+        key = self.build_key(level, spec)
+        for queue_uid in list(self.queue[key]):
+            text += f'\t{self.user_storage.get_from_id(queue_uid).display_name}\n'
             mentions.append(self.user_storage.get_from_id(queue_uid).mention)
         text += ' '.join(mentions)
         return text
@@ -30,12 +37,26 @@ class Brain:
                 pass
         return ok
 
+    @staticmethod
+    def generate_all_keys():
+        for i in range(2, 5):
+            yield i, 'simple'
+            yield i, 'duo'
+        for i in range(5, 13):
+            yield i, 'simple'
+            yield i, 'duo'
+            yield i, 'dark'
+
+    def generate_all_key_ext(self):
+        for level, spec in self.generate_all_keys():
+            yield self.build_key(level, spec), level, (spec if spec != 'simple' else '')
+
     def get_queue_text(self):
         text = ''
-        for level in self.queue:
-            if self.queue[level]:
-                text += 'Queue for rs{}\n'.format(level)
-                for uid in self.queue[level]:
+        for key, level, spec in self.generate_all_key_ext():
+            if self.queue[key]:
+                text += f'Queue for Red Star {level} {spec}\n'
+                for uid in self.queue[key]:
                     text += '\t{}\n'.format(self.user_storage.get_from_id(uid).display_name)
         if not text:
             text = 'Empty queue'
@@ -44,33 +65,36 @@ class Brain:
     def q_command(self):
         yield self.get_queue_text()
 
-    def in_command(self, user, level):
-        if user.id not in self.queue[level]:
-            self.queue[level].append(user.id)
-            yield '{} enters queue for rs{}'.format(user.display_name, level)
-            if len(self.queue[level]) == 4 or level == 2 and len(self.queue[level]) == 2:
-                yield self.generate_start_text(level)
-                for queue_uid in list(self.queue[level]):
+    def in_command(self, user, level, spec):
+        key = self.build_key(level, spec)
+        if user.id not in self.queue[key]:
+            self.queue[key].append(user.id)
+            yield f'{user.display_name} enters queue for Red Star {level} {spec}'
+            lq = len(self.queue[key])
+            if lq == 4 or lq == 2 and (level == 2 or spec == 'duo' or spec == 'dark'):
+                yield self.generate_start_text(level, spec)
+                for queue_uid in list(self.queue[key]):
                     self.clear_user_from_queue(queue_uid)
             self.db.set_collection('queue', self.queue)
             self.db.save()
             yield self.get_queue_text()
         else:
-            yield '{} already in queue for rs{}'.format(user.display_name, level)
+            yield f'{user.display_name} already in queue for Red Star {level} {spec}'
 
-    def out_command_level(self, user, level):
-        if user.id not in self.queue[level]:
-            yield '{} not in queue for rs{}'.format(user.display_name, level)
+    def out_command_level(self, user, level, spec):
+        key = self.build_key(level, spec)
+        if user.id not in self.queue[key]:
+            yield f'{user.display_name} not in queue for Red Star {level} {spec}'
         else:
-            self.queue[level].remove(user.id)
+            self.queue[key].remove(user.id)
             self.db.set_collection('queue', self.queue)
             self.db.save()
-            yield '{} leaves queue for rs{}'.format(user.display_name, level)
+            yield f'{user.display_name} leaves queue for Red Star {level} {spec}'
             yield self.get_queue_text()
 
     def out_command_all(self, user):
         if self.clear_user_from_queue(user.id):
             self.db.set_collection('queue', self.queue)
             self.db.save()
-        yield '{} leaves queue for every rs'.format(user.display_name)
+        yield '{} leaves queue for every Red Star'.format(user.display_name)
         yield self.get_queue_text()
