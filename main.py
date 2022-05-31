@@ -26,47 +26,95 @@ async def on_ready():
     print('------')
 
 
-async def handle_in(ctx, level):
+def get_int_from_start(s):
+    try:
+        level = int(s)
+        return True, level
+    except ValueError:
+        return False, 0
+
+
+async def handle_in(ctx, *args):
     display_name = ctx.author.display_name
     uid = ctx.author.id
 
-    print('?in', uid, display_name, level)
+    print('?out', uid, display_name, '|'.join(args))
+
+    error_message = '{}, please enter star level: "?in 3" "?in 2 duo" "?in 5 dark"'.format(display_name)
+
+    if len(args) == 0:
+        await ctx.send(error_message)
+        return
+    elif len(args) == 1:
+        ok, level = get_int_from_start(args[0])
+        if not ok:
+            await ctx.send(error_message)
+            return
+        spec = ''
+    elif len(args) == 2:
+        ok, level = get_int_from_start(args[0])
+        spec = args[1].lower()
+        if not ok or spec not in ('duo', 'dark'):
+            ok, level = get_int_from_start(args[1])
+            spec = args[0].lower()
+            if not ok or spec not in ('duo', 'dark'):
+                await ctx.send(error_message)
+                return
+    else:
+        await ctx.send(error_message)
+        return
 
     user = user_storage.get_user_from_ctx(ctx)
 
-    for text in brain.in_command(user, level):
+    for text in brain.in_command(user, level, spec):
         await ctx.send(text)
 
 
 @bot.command(name='in', help='?in <level> - enter queue for red star <level>')
-async def in_command(ctx, level: int):
-    await handle_in(ctx, level)
+async def in_command(ctx, *args):
+    await handle_in(ctx, *args)
 
 
 @bot.command(name='i', help='?i <level> - enter queue for red star <level>')
-async def in_command(ctx, level: int):
-    await handle_in(ctx, level)
+async def in_command(ctx, *args):
+    await handle_in(ctx, *args)
 
 
 async def handle_out(ctx, *args):
     display_name = ctx.author.display_name
     uid = ctx.author.id
-    print('?in', uid, display_name, '|'.join(args))
+    print('?out', uid, display_name, '|'.join(args))
 
     user = user_storage.get_user_from_ctx(ctx)
 
-    if len(args) == 1:
-        try:
-            level = int(args[0])
-            for text in brain.out_command_level(user, level):
-                await ctx.send(text)
-        except ValueError:
-            await ctx.send('Cannot parse command from {}'.format(display_name))
-    elif len(args) == 0:
+    if len(args) == 0:
         for text in brain.out_command_all(user):
             await ctx.send(text)
-    else:
-        await ctx.send('Cannot parse command from {}'.format(display_name))
+        return
+    elif len(args) > 2:
+        await ctx.send(f'Cannot parse command from {display_name}')
+        return
+    elif len(args) == 1:
+        try:
+            level = int(args[0])
+            spec == ''
+            for text in brain.out_command_level(user, level, spec):
+                await ctx.send(text)
+        except ValueError:
+            await ctx.send(f'Cannot parse command from {display_name}')
+            return
+    elif len(args) == 2:
+        ok, level = get_int_from_start(args[0])
+        spec = args[1].lower()
+        if not ok or spec not in ('duo', 'dark'):
+            ok, level = get_int_from_start(args[1])
+            spec = args[0].lower()
+            if not ok or spec not in ('duo', 'dark'):
+                await ctx.send(f'Cannot parse command from {display_name}')
+                return
+    for text in brain.out_command_level(user, level, spec):
+        await ctx.send(text)
+
 
 
 @bot.command(name='out', help='?out <level> - leave queue for <level>, no level = all queues')
