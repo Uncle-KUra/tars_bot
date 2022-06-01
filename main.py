@@ -38,7 +38,7 @@ async def handle_in(ctx, *args):
     display_name = ctx.author.display_name
     uid = ctx.author.id
 
-    print('?out', uid, display_name, '|'.join(args))
+    print('?in', uid, display_name, '|'.join(args))
 
     error_message = '{}, please enter star level: "?in 3" "?in 2 duo" "?in 5 dark"'.format(display_name)
 
@@ -141,24 +141,62 @@ async def out2(ctx, *args):
     await handle_out(ctx, *args)
 
 
-async def handle_q(ctx):
+async def handle_status(ctx):
     for answer in brain.q_command():
         await answer.send(ctx)
 
 
 @bot.command(name='q', help='?q - status of queues')
 async def q_command(ctx):
-    await handle_q(ctx)
+    await handle_status(ctx)
 
 
 @bot.command(name='queue', help='?queue - status of queues')
 async def queue_command(ctx):
-    await handle_q(ctx)
+    await handle_status(ctx)
 
 
 @bot.command(name='status', help='?status - status of queues')
 async def status_command(ctx):
-    await handle_q(ctx)
+    await handle_status(ctx)
+
+
+async def handle_start(ctx, *args):
+    display_name = ctx.author.display_name
+    uid = ctx.author.id
+    print('?start', uid, display_name, '|'.join(args))
+
+    user = user_storage.get_user_from_ctx(ctx)
+
+    if len(args) == 0:
+        await ctx.send(f'Start command need star level - ?start <level> <mode>')
+        return
+    elif len(args) > 2:
+        await ctx.send(f'Cannot parse command from {display_name}')
+        return
+    elif len(args) == 1:
+        try:
+            level = int(args[0])
+            spec = ''
+        except ValueError:
+            await ctx.send(f'Cannot parse command from {display_name}')
+            return
+    elif len(args) == 2:
+        ok, level = get_int_from_start(args[0])
+        spec = args[1].lower()
+        if not ok or spec not in ('duo', 'dark'):
+            ok, level = get_int_from_start(args[1])
+            spec = args[0].lower()
+            if not ok or spec not in ('duo', 'dark'):
+                await ctx.send(f'Cannot parse command from {display_name}')
+                return
+    for answer in brain.start_command(user, level, spec):
+        await answer.send(ctx)
+
+
+@bot.command(name='start', help='?start <level> <mode> - starts queue for red star <level> <mode>')
+async def start_command(ctx, *args):
+    await handle_start(ctx, *args)
 
 
 def main():

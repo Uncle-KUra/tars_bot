@@ -3,6 +3,8 @@
 from collections import defaultdict
 
 from discord_messages import TextMessage
+from discord_messages import StartRSMessage
+
 
 class Brain:
     def __init__(self, user_storage, db):
@@ -19,14 +21,14 @@ class Brain:
         return f'{level} {spec if spec else "simple"}'
 
     def generate_start_text(self, level, spec):
-        text = f'Go-go-go! Red Star {level} {spec}\n'
-        mentions = []
         key = self.build_key(level, spec)
+        mentions = []
+        names = []
         for queue_uid in list(self.queue[key]):
-            text += f'\t{self.user_storage.get_from_id(queue_uid).display_name}\n'
+            names.append(self.user_storage.get_from_id(queue_uid).display_name)
             mentions.append(self.user_storage.get_from_id(queue_uid).mention)
-        text += ' '.join(mentions)
-        return text
+        yield StartRSMessage(level, spec, names)
+        yield TextMessage(' '.join(mentions))
 
     def clear_user_from_queue(self, uid):
         ok = False
@@ -91,6 +93,20 @@ class Brain:
             self.db.set_collection('queue', self.queue)
             self.db.save()
             yield TextMessage(f'{user.display_name} leaves queue for Red Star {level} {spec}')
+            yield TextMessage(self.get_queue_text())
+
+    def start_command(self, user, level, spec):
+        key = self.build_key(level, spec)
+        if user.id not in self.queue[key]:
+            yield TextMessage(f'{user.display_name} not in queue for Red Star {level} {spec}')
+        else:
+            yield TextMessage(f'{user.display_name} starts queue for Red Star {level} {spec}')
+            for message in self.generate_start_text(level, spec):
+                yield message
+            for queue_uid in list(self.queue[key]):
+                self.clear_user_from_queue(queue_uid)
+            self.db.set_collection('queue', self.queue)
+            self.db.save()
             yield TextMessage(self.get_queue_text())
 
     def out_command_all(self, user):
