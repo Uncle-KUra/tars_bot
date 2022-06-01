@@ -70,12 +70,26 @@ async def handle_in(ctx, *args):
         await ctx.send(text)
 
 
-@bot.command(name='in', help='?in <level> - enter queue for red star <level>')
+@bot.command(name='in', help='?in <level> <mode> - enter queue for red star <level> <mode>')
 async def in_command(ctx, *args):
     await handle_in(ctx, *args)
 
 
-@bot.command(name='i', help='?i <level> - enter queue for red star <level>')
+@bot.command(name='i', help='?i <level> <mode> - enter queue for red star <level> <mode>')
+async def in_command(ctx, *args):
+    await handle_in(ctx, *args)
+
+
+@bot.command(name='In', help='?in <level> <mode> - enter queue for red star <level> <mode>')
+async def in_command(ctx, *args):
+    await handle_in(ctx, *args)
+
+@bot.command(name='IN', help='?in <level> <mode> - enter queue for red star <level> <mode>')
+async def in_command(ctx, *args):
+    await handle_in(ctx, *args)
+
+
+@bot.command(name='I', help='?i <level> <mode> - enter queue for red star <level> <mode>')
 async def in_command(ctx, *args):
     await handle_in(ctx, *args)
 
