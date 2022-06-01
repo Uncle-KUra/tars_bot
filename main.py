@@ -66,8 +66,8 @@ async def handle_in(ctx, *args):
 
     user = user_storage.get_user_from_ctx(ctx)
 
-    for text in brain.in_command(user, level, spec):
-        await ctx.send(text)
+    for answer in brain.in_command(user, level, spec):
+        await answer.send(ctx)
 
 
 @bot.command(name='in', help='?in <level> <mode> - enter queue for red star <level> <mode>')
@@ -102,8 +102,8 @@ async def handle_out(ctx, *args):
     user = user_storage.get_user_from_ctx(ctx)
 
     if len(args) == 0:
-        for text in brain.out_command_all(user):
-            await ctx.send(text)
+        for answer in brain.out_command_all(user):
+            await answer.send(ctx)
         return
     elif len(args) > 2:
         await ctx.send(f'Cannot parse command from {display_name}')
@@ -112,8 +112,8 @@ async def handle_out(ctx, *args):
         try:
             level = int(args[0])
             spec = ''
-            for text in brain.out_command_level(user, level, spec):
-                await ctx.send(text)
+            for answer in brain.out_command_level(user, level, spec):
+                await answer.send(ctx)
         except ValueError:
             await ctx.send(f'Cannot parse command from {display_name}')
             return
@@ -126,8 +126,8 @@ async def handle_out(ctx, *args):
             if not ok or spec not in ('duo', 'dark'):
                 await ctx.send(f'Cannot parse command from {display_name}')
                 return
-    for text in brain.out_command_level(user, level, spec):
-        await ctx.send(text)
+    for answer in brain.out_command_level(user, level, spec):
+        await answer.send(ctx)
 
 
 
@@ -142,8 +142,8 @@ async def out2(ctx, *args):
 
 
 async def handle_q(ctx):
-    for text in brain.q_command():
-        await ctx.send(text)
+    for answer in brain.q_command():
+        await answer.send(ctx)
 
 
 @bot.command(name='q', help='?q - status of queues')
