@@ -142,7 +142,7 @@ async def out2(ctx, *args):
 
 
 async def handle_status(ctx):
-    for answer in brain.q_command():
+    for answer in brain.status_command():
         await answer.send(ctx)
 
 
