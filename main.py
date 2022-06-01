@@ -111,7 +111,7 @@ async def handle_out(ctx, *args):
     elif len(args) == 1:
         try:
             level = int(args[0])
-            spec == ''
+            spec = ''
             for text in brain.out_command_level(user, level, spec):
                 await ctx.send(text)
         except ValueError:
