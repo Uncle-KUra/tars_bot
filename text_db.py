@@ -10,7 +10,7 @@ class DB:
 
     def save(self):
         with open(self.filename, 'wt') as outfile:
-            json.dump(self.data, outfile, ensure_ascii=False, sort_keys=True, indent='\t')
+            json.dump(self.data, outfile, ensure_ascii=False, indent='\t')
 
     def get_collection(self, name):
         if name not in self.data:
