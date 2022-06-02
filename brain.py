@@ -77,7 +77,7 @@ class Brain:
             yield TextMessage(f'{user.display_name} enters queue for Red Star {level} {spec}')
             lq = len(self.queue[key])
             if lq == 4 or lq == 2 and (level == 2 or spec == 'duo' or spec == 'dark'):
-                yield TextMessage(self.generate_start_text(level, spec))
+                yield from self.generate_start_text(level, spec)
                 for queue_uid in list(self.queue[key]):
                     self.clear_user_from_queue(queue_uid)
             self.db.set_collection('queue', self.queue)
