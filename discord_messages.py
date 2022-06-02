@@ -42,8 +42,8 @@ class TextMessage:
     def __init__(self, text):
         self.text = text
 
-    async def send(self, ctx):
-        await ctx.send(self.text)
+    async def send(self, ctx: discord.Interaction):
+        await ctx.channel.send(self.text)
 
 
 class StartRSMessage:
@@ -54,8 +54,8 @@ class StartRSMessage:
         self.embed.add_field(name='Team:', value='\n'.join(names), inline=False)
         self.embed.set_footer(text=tipper.get_next_text())
 
-    async def send(self, ctx):
-        await ctx.send(embed=self.embed)
+    async def send(self, ctx: discord.Interaction):
+        await ctx.channel.send(embed=self.embed)
 
 
 class QueueRSMessage:
@@ -69,5 +69,5 @@ class QueueRSMessage:
             name = f'{spec}Red Star {queue["level"]}'
             self.embed.add_field(name=name, value='\n'.join(queue['names']), inline=False)
 
-    async def send(self, ctx):
-        await ctx.send(embed=self.embed)
+    async def send(self, ctx: discord.Interaction):
+        await ctx.channel.send(embed=self.embed)

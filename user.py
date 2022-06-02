@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import discord
 
 class User:
     def __init__(self):
@@ -32,10 +33,10 @@ class UserStorage:
             self.users_data[int(uid)].update_from_dict(single_user)
         self.db = db
 
-    def get_user_from_ctx(self, ctx):
-        uid = ctx.author.id
-        display_name = ctx.author.display_name
-        mention = ctx.author.mention
+    def get_user_from_ctx(self, ctx: discord.Interaction):
+        uid = ctx.user.id
+        display_name = ctx.user.display_name
+        mention = ctx.user.mention
         if uid not in self.users_data:
             self.users_data[uid] = User()
         user = self.users_data[uid]

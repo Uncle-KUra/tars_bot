@@ -1,6 +1,7 @@
 {
   "token": "<prod_token>",
-  "test_token": "<test_token>",
+  "test_token": "OTgxNTI5OTQ2NjI5NDgwNTI5.GEQnlF.AXD81ObwaCfrlq_vPZgHszXXR8GCd2S-fcDDZk",
   "test": true,
-  "db_file_name": "<db_name>"
+  "db_file_name": "db.json",
+  "debug_guild_id": 0
 }
