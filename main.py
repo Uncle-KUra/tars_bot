@@ -42,7 +42,7 @@ async def on_ready():
     mode='Queue mode',
 )
 async def in_command(ctx, rs_level: RS_Levels, mode: RS_Modes = RS_Modes.none):
-    """Enter queue for red star"""
+    """enter queue for red star"""
     await handle_in(ctx, rs_level, mode)
 
 
@@ -52,7 +52,7 @@ async def in_command(ctx, rs_level: RS_Levels, mode: RS_Modes = RS_Modes.none):
     mode='Queue mode',
 )
 async def in_command(ctx, rs_level: RS_Levels, mode: RS_Modes = RS_Modes.none):
-    """Enter queue for red star"""
+    """enter queue for red star"""
     await handle_in(ctx, rs_level, mode)
 
 
@@ -62,7 +62,7 @@ async def in_command(ctx, rs_level: RS_Levels, mode: RS_Modes = RS_Modes.none):
     mode='Queue mode',
 )
 async def out_command(ctx, rs_level: RS_Levels = None, mode: RS_Modes = RS_Modes.none):
-    """Leave all queues for a red star"""
+    """leave all queues for a red star"""
     await handle_out(ctx, rs_level, mode)
 
 
@@ -72,39 +72,36 @@ async def out_command(ctx, rs_level: RS_Levels = None, mode: RS_Modes = RS_Modes
     mode='Queue mode',
 )
 async def out_command(ctx, rs_level: RS_Levels = None, mode: RS_Modes = RS_Modes.none):
-    """Leave all queues for a red star"""
+    """leave all queues for a red star"""
     await handle_out(ctx, rs_level, mode)
 
 
 @client.tree.command(name='q')
 async def q_command(ctx):
-    """Status of queues"""
+    """status of queues"""
     await handle_status(ctx)
 
 
 @client.tree.command(name='queue')
 async def queue_command(ctx):
-    """Status of queues"""
+    """status of queues"""
     await handle_status(ctx)
 
 
 @client.tree.command(name='status')
 async def status_command(ctx):
-    """Status of queues"""
+    """status of queues"""
     await handle_status(ctx)
 
 
 @client.tree.command(name='start')
-async def start_command(ctx, args: str):
-    await handle_start(ctx, *args)
-
-
-def get_int_from_start(s):
-    try:
-        level = int(s)
-        return True, level
-    except ValueError:
-        return False, 0
+@app_commands.describe(
+    rs_level='Red star level',
+    mode='Queue mode',
+)
+async def start_command(ctx, rs_level: RS_Levels, mode: RS_Modes = RS_Modes.none):
+    """starts queue for red star"""
+    await handle_start(ctx, rs_level, mode)
 
 
 async def handle_in(ctx: discord.Interaction, level: RS_Levels, mode: RS_Modes):

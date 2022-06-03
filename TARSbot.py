@@ -1,11 +1,10 @@
-import discord
-from discord import app_commands
+from discord import app_commands, Client, Intents
 
 
-class TARSbot(discord.Client):
+class TARSbot(Client):
     my_guild = None
 
-    def __init__(self, *, intents: discord.Intents, description: str):
+    def __init__(self, *, intents: Intents, description: str):
         super().__init__(intents=intents, description=description)
         self.tree = app_commands.CommandTree(self)
 
