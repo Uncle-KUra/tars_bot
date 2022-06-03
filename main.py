@@ -2,7 +2,10 @@
 import discord
 import argparse
 import json
+import enum
 
+from typing import Literal
+from discord import app_commands
 from user import UserStorage
 from brain import Brain
 from text_db import DB
@@ -15,6 +18,15 @@ db = None
 user_storage = None
 brain = None
 
+RS_Levels = Literal[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+
+
+class RS_Modes(enum.Enum):
+    none = 0
+    dark = 1
+    duo = 2
+
+
 client = TARSbot(intents=intents, description=description)
 
 
@@ -24,44 +36,61 @@ async def on_ready():
     print('-----------------------------')
 
 
-@client.tree.command()
-async def hello(interaction: discord.Interaction):
-    """Says hello!"""
-    await interaction.response.send_message(f'Hi, {interaction.user.mention}')
-
-
 @client.tree.command(name='in')
-async def in_command(ctx, args: str):
-    await handle_in(ctx, *args)
+@app_commands.describe(
+    rs_level='Red star level',
+    mode='Queue mode',
+)
+async def in_command(ctx, rs_level: RS_Levels, mode: RS_Modes = RS_Modes.none):
+    """Enter queue for red star"""
+    await handle_in(ctx, rs_level, mode)
 
 
 @client.tree.command(name='i')
-async def in_command(ctx, args: str):
-    await handle_in(ctx, *args)
+@app_commands.describe(
+    rs_level='Red star level',
+    mode='Queue mode',
+)
+async def in_command(ctx, rs_level: RS_Levels, mode: RS_Modes = RS_Modes.none):
+    """Enter queue for red star"""
+    await handle_in(ctx, rs_level, mode)
 
 
 @client.tree.command(name='out')
-async def out(ctx):
-    await handle_out(ctx)
+@app_commands.describe(
+    rs_level='Red star level',
+    mode='Queue mode',
+)
+async def out_command(ctx, rs_level: RS_Levels = None, mode: RS_Modes = RS_Modes.none):
+    """Leave all queues for a red star"""
+    await handle_out(ctx, rs_level, mode)
 
 
 @client.tree.command(name='o')
-async def out2(ctx):
-    await handle_out(ctx)
+@app_commands.describe(
+    rs_level='Red star level',
+    mode='Queue mode',
+)
+async def out_command(ctx, rs_level: RS_Levels = None, mode: RS_Modes = RS_Modes.none):
+    """Leave all queues for a red star"""
+    await handle_out(ctx, rs_level, mode)
 
 
 @client.tree.command(name='q')
 async def q_command(ctx):
+    """Status of queues"""
     await handle_status(ctx)
 
 
 @client.tree.command(name='queue')
 async def queue_command(ctx):
+    """Status of queues"""
     await handle_status(ctx)
 
 
 @client.tree.command(name='status')
 async def status_command(ctx):
+    """Status of queues"""
     await handle_status(ctx)
 
 
@@ -78,39 +107,15 @@ def get_int_from_start(s):
         return False, 0
 
 
-async def handle_in(ctx: discord.Interaction, *args):
+async def handle_in(ctx: discord.Interaction, level: RS_Levels, mode: RS_Modes):
     display_name = ctx.user.display_name
     uid = ctx.user.id
-
-    print('?in', uid, display_name, '|'.join(args))
-
-    error_message = '{}, please enter star level: "?in 3" "?in 2 duo" "?in 5 dark"'.format(display_name)
-
-    if len(args) == 0:
-        await ctx.response.send_message(error_message)
-        return
-    elif len(args) == 1:
-        ok, level = get_int_from_start(args[0])
-        if not ok:
-            await ctx.response.send_message(error_message)
-            return
-        spec = ''
-    elif len(args) == 2:
-        ok, level = get_int_from_start(args[0])
-        spec = args[1].lower()
-        if not ok or spec not in ('duo', 'dark'):
-            ok, level = get_int_from_start(args[1])
-            spec = args[0].lower()
-            if not ok or spec not in ('duo', 'dark'):
-                await ctx.response.send_message(error_message)
-                return
-    else:
-        await ctx.response.send_message(error_message)
-        return
-
     user = user_storage.get_user_from_ctx(ctx)
+    legacy_mode = mode.name if (mode.value > 0) else ''
 
-    for answer in brain.in_command(user, level, spec):
+    print(f'/in {level} {legacy_mode} by {display_name} ({uid})')
+
+    for answer in brain.in_command(user, level, legacy_mode):
         await answer.send(ctx)
 
 
@@ -120,72 +125,31 @@ async def handle_status(ctx: discord.Interaction):
         await answer.send(ctx)
 
 
-async def handle_start(ctx: discord.Interaction, *args):
+async def handle_start(ctx: discord.Interaction, level: RS_Levels, mode: RS_Modes):
     display_name = ctx.user.display_name
     uid = ctx.user.id
-    print('?start', uid, display_name, '|'.join(args))
-
     user = user_storage.get_user_from_ctx(ctx)
+    legacy_mode = mode.name if (mode.value > 0) else ''
 
-    if len(args) == 0:
-        await ctx.response.send_message(f'Start command need star level - ?start <level> <mode>')
-        return
-    elif len(args) > 2:
-        await ctx.response.send_message(f'Cannot parse command from {display_name}')
-        return
-    elif len(args) == 1:
-        try:
-            level = int(args[0])
-            spec = ''
-        except ValueError:
-            await ctx.response.send_message(f'Cannot parse command from {display_name}')
-            return
-    elif len(args) == 2:
-        ok, level = get_int_from_start(args[0])
-        spec = args[1].lower()
-        if not ok or spec not in ('duo', 'dark'):
-            ok, level = get_int_from_start(args[1])
-            spec = args[0].lower()
-            if not ok or spec not in ('duo', 'dark'):
-                await ctx.response.send_message(f'Cannot parse command from {display_name}')
-                return
-    for answer in brain.start_command(user, level, spec):
+    print(f'/start {level} {legacy_mode} by {display_name} ({uid})')
+
+    for answer in brain.start_command(user, level, legacy_mode):
         await answer.send(ctx)
 
 
-async def handle_out(ctx: discord.Interaction, *args):
+async def handle_out(ctx: discord.Interaction, level: RS_Levels, mode: RS_Modes):
     display_name = ctx.user.display_name
     uid = ctx.user.id
-    print('?out', uid, display_name, '|'.join(args))
-
     user = user_storage.get_user_from_ctx(ctx)
+    legacy_mode = mode.name if (mode.value > 0) else ''
 
-    if len(args) == 0:
+    print(f'/out {level} {legacy_mode} by {display_name} ({uid})')
+
+    if level is None:
         for answer in brain.out_command_all(user):
             await answer.send(ctx)
         return
-    elif len(args) > 2:
-        await ctx.response.send_message(f'Cannot parse command from {display_name}')
-        return
-    elif len(args) == 1:
-        try:
-            level = int(args[0])
-            spec = ''
-            for answer in brain.out_command_level(user, level, spec):
-                await answer.send(ctx)
-        except ValueError:
-            await ctx.response.send_message(f'Cannot parse command from {display_name}')
-            return
-    elif len(args) == 2:
-        ok, level = get_int_from_start(args[0])
-        spec = args[1].lower()
-        if not ok or spec not in ('duo', 'dark'):
-            ok, level = get_int_from_start(args[1])
-            spec = args[0].lower()
-            if not ok or spec not in ('duo', 'dark'):
-                await ctx.response.send_message(f'Cannot parse command from {display_name}')
-                return
-    for answer in brain.out_command_level(user, level, spec):
+    for answer in brain.out_command_level(user, level, legacy_mode):
         await answer.send(ctx)
 
 
