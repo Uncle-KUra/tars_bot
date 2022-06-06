@@ -119,13 +119,13 @@ def parse_command_with_level(parts, name, command_strings, command_weak_strings)
         return ParseResult(name, params={'level': int(parts[1]), 'mode': convert_mode(parts[2])}, hard=True)
     if len(parts) == 4 and is_prefix(parts[0]) and is_command(parts[1]) and is_level_string(parts[2]) and is_mode(
             parts[3]):
-        return ParseResult(name, params={'level': int(parts[2]), 'mode': convert_mode(parts[2])})
+        return ParseResult(name, params={'level': int(parts[2]), 'mode': convert_mode(parts[3])})
     if len(parts) == 4 and is_prefix(parts[0]) and is_command(parts[3]) and is_level_string(parts[1]) and is_mode(
             parts[2]):
         return ParseResult(name, params={'level': int(parts[1]), 'mode': convert_mode(parts[2])})
     if len(parts) == 4 and is_prefix(parts[0]) and is_weak_command(parts[1]) and is_level_string(parts[2]) and is_mode(
             parts[3]):
-        return ParseResult(name, params={'level': int(parts[2]), 'mode': convert_mode(parts[2])}, hard=True)
+        return ParseResult(name, params={'level': int(parts[2]), 'mode': convert_mode(parts[3])}, hard=True)
 
     return ParseResult()
 
