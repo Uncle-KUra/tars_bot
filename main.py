@@ -22,7 +22,6 @@ intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True
 
-
 db = None
 user_storage = None
 brain = None
@@ -48,13 +47,15 @@ async def on_ready():
 def process_help(_, command):
     if command.hard:
         yield TextMessage('Was hard but I got it')
-    commands = [{'title': 'Help', 'text': '?help / ?h - print this help'}]
-    command.append({'title': 'Enter a queue', 'text': '?in <level> <mode> - enter queue for specific RS level and mode. Example: ?in 4 / ?in 5 dark'})
-    command.append({'title': 'Enter a queue for dark mode', 'text': '?dark <level> - enter queue for specific DRS level. Example: ?dark 4'})
-    command.append({'title': 'Leave a queue', 'text': '?out <level> <mode> - leave queue for specific level and mode. Example: ?out 3 / ?in 7 duo'})
-    command.append({'title': 'Leave all queues', 'text': '?out - leave all queue'})
-    command.append({'title': 'Start uncomplete', 'text': '?start <level> <mode> - start red start for specific level and mode'})
-    command.append({'title': 'Show queues status', 'text': '?status - leave all queue'})
+    commands = [{'title': 'Help', 'text': '?help / ?h - print this help'}, {'title': 'Enter a queue',
+                                                                            'text': '?in <level> <mode> - enter queue for specific RS level and mode. \nExample: ?in 4 / ?in 5 dark'},
+                {'title': 'Enter a queue for dark mode',
+                 'text': '?dark <level> - enter queue for specific DRS level. \nExample: ?dark 4'},
+                {'title': 'Leave a queue',
+                 'text': '?out <level> <mode> - leave queue for specific level and mode. \nExample: ?out 3 / ?in 7 duo'},
+                {'title': 'Leave all queues', 'text': '?out - leave all queue'}, {'title': 'Start uncomplete',
+                                                                                  'text': '?start <level> <mode> - start red start for specific level and mode'},
+                {'title': 'Show queues status', 'text': '?status - leave all queue'}]
     yield HelpMessage(commands)
 
 
