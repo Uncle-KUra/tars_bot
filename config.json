@@ -2,5 +2,6 @@
   "token": "<prod_token>",
   "test_token": "<test_token>",
   "test": true,
-  "db_file_name": "<db_name>"
+  "db_file_name": "db.json",
+  "debug_guild_id": 0
 }
