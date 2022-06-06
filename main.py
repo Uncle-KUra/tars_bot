@@ -119,8 +119,7 @@ async def on_message(message):
         return
     parts = stupid_tokenize(message.content)
     command = parse_all(parts)
-    if command:
-        processor = processors.get(command.command, None)
+    processor = processors.get(command.command, None) if command else None
     if not processor:
         return
     for answer in processor(message, command):
