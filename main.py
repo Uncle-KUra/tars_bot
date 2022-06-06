@@ -10,9 +10,17 @@ from user import UserStorage
 from brain import Brain
 from text_db import DB
 from TARSbot import TARSbot
+from parsers import parse_help
+from parsers import stupid_tokenize
+
+from discord_messages import HelpMessage
+from discord_messages import TextMessage
 
 description = '''Stupid queue bot '''
 intents = discord.Intents.default()
+intents.messages = True
+intents.message_content = True
+
 
 db = None
 user_storage = None
@@ -21,7 +29,7 @@ brain = None
 RS_Levels = Literal[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 
 
-class RS_Modes(enum.Enum):
+class RedStarModes(enum.Enum):
     none = 0
     dark = 1
     duo = 2
@@ -36,12 +44,45 @@ async def on_ready():
     print('-----------------------------')
 
 
+def generate_help():
+    commands = [{'title': 'Help', 'text': '?help / ?h - print this help'}]
+    return HelpMessage(commands)
+
+
+def process_help(parts):
+    ok, hard = parse_help(parts)
+    if not ok:
+        return []
+    answers = []
+    if hard:
+        answers.append(TextMessage('Was hard but I got it'))
+    answers.append(generate_help())
+    return answers
+
+
+def process_message(string):
+    parts = stupid_tokenize(string)
+    answers = process_help(parts)
+    if answers:
+        return answers
+    #todo handle bad ? commands
+    return []
+
+
+@client.event
+async def on_message(message):
+    if message.author.bot:
+        return
+    for answer in process_message(message.content):
+        await answer.send(message.channel)
+
+
 @client.tree.command(name='in')
 @app_commands.describe(
     rs_level='Red star level',
     mode='Queue mode',
 )
-async def in_command(ctx, rs_level: RS_Levels, mode: RS_Modes = RS_Modes.none):
+async def in_command(ctx, rs_level: RS_Levels, mode: RedStarModes = RedStarModes.none):
     """enter queue for red star"""
     await handle_in(ctx, rs_level, mode)
 
@@ -51,7 +92,7 @@ async def in_command(ctx, rs_level: RS_Levels, mode: RS_Modes = RS_Modes.none):
     rs_level='Red star level',
     mode='Queue mode',
 )
-async def in_command(ctx, rs_level: RS_Levels, mode: RS_Modes = RS_Modes.none):
+async def in_command(ctx, rs_level: RS_Levels, mode: RedStarModes = RedStarModes.none):
     """enter queue for red star"""
     await handle_in(ctx, rs_level, mode)
 
@@ -61,7 +102,7 @@ async def in_command(ctx, rs_level: RS_Levels, mode: RS_Modes = RS_Modes.none):
     rs_level='Red star level',
     mode='Queue mode',
 )
-async def out_command(ctx, rs_level: RS_Levels = None, mode: RS_Modes = RS_Modes.none):
+async def out_command(ctx, rs_level: RS_Levels = None, mode: RedStarModes = RedStarModes.none):
     """leave all queues for a red star"""
     await handle_out(ctx, rs_level, mode)
 
@@ -71,7 +112,7 @@ async def out_command(ctx, rs_level: RS_Levels = None, mode: RS_Modes = RS_Modes
     rs_level='Red star level',
     mode='Queue mode',
 )
-async def out_command(ctx, rs_level: RS_Levels = None, mode: RS_Modes = RS_Modes.none):
+async def out_command(ctx, rs_level: RS_Levels = None, mode: RedStarModes = RedStarModes.none):
     """leave all queues for a red star"""
     await handle_out(ctx, rs_level, mode)
 
@@ -99,12 +140,12 @@ async def status_command(ctx):
     rs_level='Red star level',
     mode='Queue mode',
 )
-async def start_command(ctx, rs_level: RS_Levels, mode: RS_Modes = RS_Modes.none):
+async def start_command(ctx, rs_level: RS_Levels, mode: RedStarModes = RedStarModes.none):
     """starts queue for red star"""
     await handle_start(ctx, rs_level, mode)
 
 
-async def handle_in(ctx: discord.Interaction, level: RS_Levels, mode: RS_Modes):
+async def handle_in(ctx: discord.Interaction, level: RS_Levels, mode: RedStarModes):
     display_name = ctx.user.display_name
     uid = ctx.user.id
     user = user_storage.get_user_from_ctx(ctx)
@@ -113,16 +154,16 @@ async def handle_in(ctx: discord.Interaction, level: RS_Levels, mode: RS_Modes):
     print(f'/in {level} {legacy_mode} by {display_name} ({uid})')
 
     for answer in brain.in_command(user, level, legacy_mode):
-        await answer.send(ctx)
+        await answer.send(ctx.channel)
 
 
 async def handle_status(ctx: discord.Interaction):
     await ctx.response.send_message('check status')
     for answer in brain.status_command():
-        await answer.send(ctx)
+        await answer.send(ctx.channel)
 
 
-async def handle_start(ctx: discord.Interaction, level: RS_Levels, mode: RS_Modes):
+async def handle_start(ctx: discord.Interaction, level: RS_Levels, mode: RedStarModes):
     display_name = ctx.user.display_name
     uid = ctx.user.id
     user = user_storage.get_user_from_ctx(ctx)
@@ -131,10 +172,10 @@ async def handle_start(ctx: discord.Interaction, level: RS_Levels, mode: RS_Mode
     print(f'/start {level} {legacy_mode} by {display_name} ({uid})')
 
     for answer in brain.start_command(user, level, legacy_mode):
-        await answer.send(ctx)
+        await answer.send(ctx.channel)
 
 
-async def handle_out(ctx: discord.Interaction, level: RS_Levels, mode: RS_Modes):
+async def handle_out(ctx: discord.Interaction, level: RS_Levels, mode: RedStarModes):
     display_name = ctx.user.display_name
     uid = ctx.user.id
     user = user_storage.get_user_from_ctx(ctx)
@@ -144,10 +185,10 @@ async def handle_out(ctx: discord.Interaction, level: RS_Levels, mode: RS_Modes)
 
     if level is None:
         for answer in brain.out_command_all(user):
-            await answer.send(ctx)
+            await answer.send(ctx.channel)
         return
     for answer in brain.out_command_level(user, level, legacy_mode):
-        await answer.send(ctx)
+        await answer.send(ctx.channel)
 
 
 def main():

@@ -42,32 +42,41 @@ class TextMessage:
     def __init__(self, text):
         self.text = text
 
-    async def send(self, ctx: discord.Interaction):
-        await ctx.channel.send(self.text)
+    async def send(self, ctx: discord.channel):
+        await ctx.send(self.text)
 
 
-class StartRSMessage:
+class EmbedMessage:
+    def __init__(self, title, color):
+        self.embed = discord.Embed(title=title, type="rich", colour=color)
+
+    async def send(self, ctx: discord.channel):
+        await ctx.send(embed=self.embed)
+
+
+class StartRSMessage(EmbedMessage):
     def __init__(self, level, spec, names):
         title = f'{"Dark" if spec == "dark" else ""} Red Star {level} starts!'
         color = discord.Colour.dark_red() if spec == "dark" else discord.Colour.red()
-        self.embed = discord.Embed(title=title, type="rich", colour=color)
+        super(StartRSMessage, self).__init__(title, color)
         self.embed.add_field(name='Team:', value='\n'.join(names), inline=False)
         self.embed.set_footer(text=tipper.get_next_text())
 
-    async def send(self, ctx: discord.Interaction):
-        await ctx.channel.send(embed=self.embed)
 
-
-class QueueRSMessage:
+class QueueRSMessage(EmbedMessage):
     def __init__(self, queue_4_print):
-        color = discord.Colour.blue()
-        title = f'Queues for Red Stars'
-        self.embed = discord.Embed(title=title, type="rich", colour=color)
+        super(QueueRSMessage, self).__init__('Queues for Red Stars', discord.Colour.blue())
         for queue in queue_4_print:
             spec = 'Dark ' if queue['spec'] == 'dark' else ''
             spec = 'Duo ' if queue['spec'] == 'duo' else spec
             name = f'{spec}Red Star {queue["level"]}'
             self.embed.add_field(name=name, value='\n'.join(queue['names']), inline=False)
 
-    async def send(self, ctx: discord.Interaction):
-        await ctx.channel.send(embed=self.embed)
+
+class HelpMessage(EmbedMessage):
+    def __init__(self, commands):
+        super(HelpMessage, self).__init__('TARS wants to help you', discord.Colour.lighter_grey())
+        for command in commands:
+            name = command['title']
+            text = command['text']
+            self.embed.add_field(name=name, value=text, inline=False)
