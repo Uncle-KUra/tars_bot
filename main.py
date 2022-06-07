@@ -62,43 +62,43 @@ def process_help(_, command):
 def process_full_out(message, command):
     if command.hard:
         yield TextMessage('Was hard but I got it')
-    yield from handle_out_impl(message.author, None, '')
+    yield from handle_out(message.author, None, '')
 
 
 def process_level_out(message, command):
     if command.hard:
         yield TextMessage('Was hard but I got it')
-    yield from handle_out_impl(message.author, command.params['level'], command.params.get('mode', ''))
+    yield from handle_out(message.author, command.params['level'], command.params.get('mode', ''))
 
 
 def process_level_in(message, command):
     if command.hard:
         yield TextMessage('Was hard but I got it')
-    yield from handle_in_impl(message.author, command.params['level'], command.params.get('mode', ''))
+    yield from handle_in(message.author, command.params['level'], command.params.get('mode', ''))
 
 
 def process_level_start(message, command):
     if command.hard:
         yield TextMessage('Was hard but I got it')
-    yield from handle_start_impl(message.author, command.params['level'], command.params.get('mode', ''))
+    yield from handle_start(message.author, command.params['level'], command.params.get('mode', ''))
 
 
 def process_level_dark(message, command):
     if command.hard:
         yield TextMessage('Was hard but I got it')
-    yield from handle_in_impl(message.author, command.params['level'], 'dark')
+    yield from handle_in(message.author, command.params['level'], 'dark')
 
 
 def process_level_duo(message, command):
     if command.hard:
         yield TextMessage('Was hard but I got it')
-    yield from handle_in_impl(message.author, command.params['level'], 'duo')
+    yield from handle_in(message.author, command.params['level'], 'duo')
 
 
 def process_status(_, command):
     if command.hard:
         yield TextMessage('Was hard but I got it')
-    yield from handle_status_impl()
+    yield from handle_status()
 
 
 processors = {
@@ -123,7 +123,7 @@ async def on_message(message):
     if not processor:
         return
     for answer in processor(message, command):
-        await answer.send(message.channel)
+        await answer.send(message.channel.send)
 
 
 @client.tree.command(name='in')
@@ -131,19 +131,16 @@ async def on_message(message):
     rs_level='Red star level',
     mode='Queue mode',
 )
-async def in_command(ctx, rs_level: RS_Levels, mode: RedStarModes = RedStarModes.none):
+async def in_command(ctx: discord.Interaction, rs_level: RS_Levels, mode: RedStarModes = RedStarModes.none):
     """enter queue for red star"""
-    await handle_in(ctx, rs_level, mode)
+    user = user_storage.get_user_from_ctx(ctx)
+    legacy_mode = mode.name if (mode.value > 0) else ''
+    answers = handle_in(user, rs_level, legacy_mode)
 
+    await next(answers).send(ctx.response.send_message)
 
-@client.tree.command(name='i')
-@app_commands.describe(
-    rs_level='Red star level',
-    mode='Queue mode',
-)
-async def in_command(ctx, rs_level: RS_Levels, mode: RedStarModes = RedStarModes.none):
-    """enter queue for red star"""
-    await handle_in(ctx, rs_level, mode)
+    for answer in answers:
+        await answer.send(ctx.channel.send)
 
 
 @client.tree.command(name='out')
@@ -151,37 +148,38 @@ async def in_command(ctx, rs_level: RS_Levels, mode: RedStarModes = RedStarModes
     rs_level='Red star level',
     mode='Queue mode',
 )
-async def out_command(ctx, rs_level: RS_Levels = None, mode: RedStarModes = RedStarModes.none):
+async def out_command(ctx: discord.Interaction, rs_level: RS_Levels = None, mode: RedStarModes = RedStarModes.none):
     """leave all queues for a red star"""
-    await handle_out(ctx, rs_level, mode)
+    user = user_storage.get_user_from_ctx(ctx)
+    legacy_mode = mode.name if (mode.value > 0) else ''
+    answers = handle_out(user, rs_level, legacy_mode)
 
+    await next(answers).send(ctx.response.send_message)
 
-@client.tree.command(name='o')
-@app_commands.describe(
-    rs_level='Red star level',
-    mode='Queue mode',
-)
-async def out_command(ctx, rs_level: RS_Levels = None, mode: RedStarModes = RedStarModes.none):
-    """leave all queues for a red star"""
-    await handle_out(ctx, rs_level, mode)
-
-
-@client.tree.command(name='q')
-async def q_command(ctx):
-    """status of queues"""
-    await handle_status(ctx)
+    for answer in answers:
+        await answer.send(ctx.channel.send)
 
 
 @client.tree.command(name='queue')
-async def queue_command(ctx):
+async def queue_command(ctx: discord.Interaction):
     """status of queues"""
-    await handle_status(ctx.channel)
+
+    answers = handle_status()
+    await next(answers).send(ctx.response.send_message)
+
+    for answer in answers:
+        await answer.send(ctx.channel.send)
 
 
 @client.tree.command(name='status')
-async def status_command(ctx):
+async def status_command(ctx: discord.Interaction):
     """status of queues"""
-    await handle_status(ctx.channel)
+
+    answers = handle_status()
+    await next(answers).send(ctx.response.send_message)
+
+    for answer in answers:
+        await answer.send(ctx.channel.send)
 
 
 @client.tree.command(name='start')
@@ -191,68 +189,39 @@ async def status_command(ctx):
 )
 async def start_command(ctx, rs_level: RS_Levels, mode: RedStarModes = RedStarModes.none):
     """starts queue for red star"""
-    await handle_start(ctx, rs_level, mode)
+    user = user_storage.get_user_from_ctx(ctx)
+    legacy_mode = mode.name if (mode.value > 0) else ''
+    answers = handle_start(user, rs_level, legacy_mode)
+
+    next(answers).send(ctx.response.send_message)
+
+    for answer in answers:
+        await answer.send(ctx.channel.send)
 
 
-def handle_in_impl(user, level, legacy_mode):
+def handle_in(user, level, legacy_mode):
+    print(f'im {level} {legacy_mode} by {user.display_name} ({user.id})')
+
     yield from brain.in_command(user, level, legacy_mode)
 
 
-async def handle_in(ctx: discord.Interaction, level: RS_Levels, mode: RedStarModes):
-    display_name = ctx.user.display_name
-    uid = ctx.user.id
-    user = user_storage.get_user_from_ctx(ctx)
-    legacy_mode = mode.name if (mode.value > 0) else ''
-
-    print(f'/in {level} {legacy_mode} by {display_name} ({uid})')
-
-    for answer in handle_in_impl(user, level, legacy_mode):
-        await answer.send(ctx.channel)
-
-
-def handle_status_impl():
+def handle_status():
     yield from brain.status_command()
 
 
-async def handle_status(ctx: discord.Interaction):
-    await ctx.response.send_message('check status')
-    for answer in handle_status_impl:
-        await answer.send(ctx.channel)
+def handle_start(user, level, legacy_mode):
+    print(f'start {level} {legacy_mode} by {user.display_name} ({user.id})')
 
-
-def handle_start_impl(user, level, legacy_mode):
     yield from brain.start_command(user, level, legacy_mode)
 
 
-async def handle_start(ctx: discord.Interaction, level: RS_Levels, mode: RedStarModes):
-    display_name = ctx.user.display_name
-    uid = ctx.user.id
-    user = user_storage.get_user_from_ctx(ctx)
-    legacy_mode = mode.name if (mode.value > 0) else ''
+def handle_out(user: discord.user, level: RS_Levels, mode: str):
+    print(f'out {level} {mode} by {user.display_name} ({user.id})')
 
-    print(f'/start {level} {legacy_mode} by {display_name} ({uid})')
-
-    for answer in handle_start_impl(user, level, legacy_mode):
-        await answer.send(ctx.channel)
-
-
-def handle_out_impl(user: discord.user, level: RS_Levels, mode: str):
     if level is None:
         yield from brain.out_command_all(user)
         return
     yield from brain.out_command_level(user, level, mode)
-
-
-async def handle_out(ctx: discord.Interaction, level: RS_Levels, mode: RedStarModes):
-    display_name = ctx.user.display_name
-    uid = ctx.user.id
-    user = user_storage.get_user_from_ctx(ctx)
-    legacy_mode = mode.name if (mode.value > 0) else ''
-
-    print(f'/out {level} {legacy_mode} by {display_name} ({uid})')
-
-    for answer in handle_out_impl(user, level, legacy_mode):
-        await answer.send(ctx.channel)
 
 
 def main():
