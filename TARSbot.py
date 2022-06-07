@@ -11,4 +11,4 @@ class TARSbot(Client):
     async def setup_hook(self):
         if self.my_guild:
             self.tree.copy_global_to(guild=self.my_guild)
-            await self.tree.sync(guild=self.my_guild)
+        await self.tree.sync(guild=self.my_guild)
