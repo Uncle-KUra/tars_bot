@@ -88,7 +88,7 @@ def parse_help(parts):
 
 
 def parse_status(parts):
-    return parse_command(parts, 'status', ('status', 'queue'), [])
+    return parse_command(parts, 'status', ('status', 'queue', 'q'), [])
 
 
 def parse_command_with_level(parts, name, command_strings, command_weak_strings):

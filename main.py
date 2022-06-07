@@ -216,7 +216,7 @@ def handle_status_impl():
 
 async def handle_status(ctx: discord.Interaction):
     await ctx.response.send_message('check status')
-    for answer in handle_status_impl:
+    for answer in handle_status_impl():
         await answer.send(ctx.channel)
 
 
