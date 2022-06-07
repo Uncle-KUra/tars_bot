@@ -175,13 +175,13 @@ async def q_command(ctx):
 @client.tree.command(name='queue')
 async def queue_command(ctx):
     """status of queues"""
-    await handle_status(ctx.channel)
+    await handle_status(ctx)
 
 
 @client.tree.command(name='status')
 async def status_command(ctx):
     """status of queues"""
-    await handle_status(ctx.channel)
+    await handle_status(ctx)
 
 
 @client.tree.command(name='start')
