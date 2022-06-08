@@ -174,7 +174,6 @@ async def queue_command(ctx: discord.Interaction):
 @client.tree.command(name='status')
 async def status_command(ctx: discord.Interaction):
     """status of queues"""
-
     answers = handle_status()
     await next(answers).send(ctx.response.send_message)
 
@@ -219,9 +218,9 @@ def handle_out(user: discord.user, level: RS_Levels, mode: str):
     print(f'out {level} {mode} by {user.display_name} ({user.id})')
 
     if level is None:
-        yield from brain.out_command_all(user)
+        yield from brain.out_all_command(user)
         return
-    yield from brain.out_command_level(user, level, mode)
+    yield from brain.out_level_command(user, level, mode)
 
 
 def main():
