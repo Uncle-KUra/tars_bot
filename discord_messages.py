@@ -5,7 +5,7 @@ import random
 class RandomTipper:
     def __init__(self):
         self.tips = list()
-        self.tips.append({'text': 'TARS tip: I understand my progress will be erased',
+        self.tips.append({'text': 'Andreas tip: I understand my progress will be erased',
                           'weight': 3})
         self.tips.append({'text': 'TARS tip: Here we can wait for Dark Nebula release',
                           'weight': 1})
@@ -13,6 +13,12 @@ class RandomTipper:
                           'weight': 1})
         self.tips.append({'text': 'TARS tip: ?start <level> <spec> command send even incomplete team to RS',
                           'weight': 1})
+        self.tips.append({'text': 'Xinos tip: Use slash commands',
+                          'weight': 1})
+        self.tips.append({'text': 'Uncle_KUra tip: "dark 5" is enough',
+                          'weight': 2})
+        self.tips.append({'text': 'TARS tip: please ping Uncle_KUra if I\'m broken',
+                          'weight': 3})
         self.last_seen = [2] * len(self.tips)
         self.stats = [0] * len(self.tips)
 
