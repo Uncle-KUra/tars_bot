@@ -238,9 +238,9 @@ async def handle_start(ctx: discord.Interaction, level: RS_Levels, mode: RedStar
 
 def handle_out_impl(user: discord.user, level: RS_Levels, mode: str):
     if level is None:
-        yield from brain.out_command_all(user)
+        yield from brain.out_all_command(user)
         return
-    yield from brain.out_command_level(user, level, mode)
+    yield from brain.out_level_command(user, level, mode)
 
 
 async def handle_out(ctx: discord.Interaction, level: RS_Levels, mode: RedStarModes):
