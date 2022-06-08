@@ -82,10 +82,12 @@ class Brain:
             yield TextMessage('Empty queue')
 
     def status_command(self):
+        print('command status')
         with self.lock:
             yield from self.generate_queue_text()
 
     def in_command(self, user, level, spec):
+        print(f'command in    {user.id} {user.display_name} {level} {spec}')
         with self.lock:
             key = self.build_key(level, spec)
             if user.id not in self.queue[key]:
@@ -103,6 +105,7 @@ class Brain:
                 yield TextMessage(f'{user.display_name} already in queue for Red Star {level} {spec}')
 
     def out_level_command(self, user, level, spec):
+        print(f'command out   {user.id} {user.display_name} {level} {spec}')
         with self.lock:
             key = self.build_key(level, spec)
             if user.id not in self.queue[key]:
@@ -115,6 +118,7 @@ class Brain:
                 yield from self.generate_queue_text()
 
     def start_command(self, user, level, spec):
+        print(f'command start {user.id} {user.display_name} {level} {spec}')
         with self.lock:
             key = self.build_key(level, spec)
             if user.id not in self.queue[key]:
@@ -129,6 +133,7 @@ class Brain:
                 yield from self.generate_queue_text()
 
     def out_all_command(self, user):
+        print(f'command out   {user.id} {user.display_name}')
         with self.lock:
             if self.clear_user_from_queue(user.id):
                 self.db.set_collection('queue', self.queue)
