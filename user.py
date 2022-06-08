@@ -46,4 +46,4 @@ class UserStorage:
         return user
 
     def get_from_id(self, uid):
-        return self.users_data[uid]
+        return self.users_data.get(uid, None)

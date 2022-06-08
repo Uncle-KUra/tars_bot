@@ -28,8 +28,13 @@ class Brain:
         mentions = []
         names = []
         for queue_uid in list(self.queue[key]):
-            names.append(self.user_storage.get_from_id(queue_uid).display_name)
-            mentions.append(self.user_storage.get_from_id(queue_uid).mention)
+            user = self.user_storage.get_from_id(queue_uid)
+            if user:
+                names.append(user.display_name)
+                mentions.append(user.mention)
+            else:
+                print(f'user not found at generate start text {queue_uid}')
+                names.append(str(queue_uid))
         yield StartRSMessage(level, spec, names)
         yield TextMessage(' '.join(mentions))
 
@@ -61,9 +66,16 @@ class Brain:
         queue_4_print = []
         for key, level, spec in self.generate_all_key_ext():
             if self.queue[key]:
+                names = []
+                for uid in self.queue[key]:
+                    user = self.user_storage.get_from_id(uid)
+                    if user:
+                        names.append(user.display_name)
+                    else:
+                        names.append(str(uid))
+                        print(f'user not found at generate queue text {uid}')
                 queue_4_print.append({'level': level, 'spec': spec,
-                                      'names': [self.user_storage.get_from_id(uid).display_name for uid in
-                                                self.queue[key]]})
+                                      'names': names})
         if queue_4_print:
             yield QueueRSMessage(queue_4_print)
         else:
