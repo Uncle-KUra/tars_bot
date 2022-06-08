@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from collections import defaultdict
-import asyncio
+import threading
 
 from discord_messages import TextMessage
 from discord_messages import StartRSMessage
@@ -17,7 +17,7 @@ class Brain:
             self.queue[key] = list(value)
         self.user_storage = user_storage
         self.db = db
-        self.lock = asyncio.Lock()
+        self.lock = threading.Lock()
 
     @staticmethod
     def build_key(level, spec):
