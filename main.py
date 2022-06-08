@@ -192,7 +192,7 @@ async def start_command(ctx, rs_level: RS_Levels, mode: RedStarModes = RedStarMo
     legacy_mode = mode.name if (mode.value > 0) else ''
     answers = handle_start(user, rs_level, legacy_mode)
 
-    next(answers).send(ctx.response.send_message)
+    await next(answers).send(ctx.response.send_message)
 
     for answer in answers:
         await answer.send(ctx.channel.send)
