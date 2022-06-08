@@ -42,16 +42,16 @@ class TextMessage:
     def __init__(self, text):
         self.text = text
 
-    async def send(self, ctx: discord.channel):
-        await ctx.send(self.text)
+    async def send(self, handler: discord.InteractionResponse.send_message):
+        await handler(self.text)
 
 
 class EmbedMessage:
     def __init__(self, title, color):
         self.embed = discord.Embed(title=title, type="rich", colour=color)
 
-    async def send(self, ctx: discord.channel):
-        await ctx.send(embed=self.embed)
+    async def send(self, handler: discord.InteractionResponse.send_message):
+        await handler(embed=self.embed)
 
 
 class StartRSMessage(EmbedMessage):
