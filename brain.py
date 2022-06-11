@@ -7,9 +7,16 @@ from discord_messages import TextMessage
 from discord_messages import StartRSMessage
 from discord_messages import QueueRSMessage
 
+from rs_types import RS_Levels
+from user import UserStorage
+from user import User
+from text_db import DB
+
 
 class Brain:
-    def __init__(self, user_storage, db):
+    def __init__(self, user_storage: UserStorage, db: DB):
+        if not user_storage or not db:
+            return
         self.queue = defaultdict(list)
         for key, value in db.get_collection('queue'):
             if len(key) == 1:
@@ -20,10 +27,10 @@ class Brain:
         self.lock = threading.Lock()
 
     @staticmethod
-    def build_key(level, spec):
+    def build_key(level: RS_Levels, spec):
         return f'{level} {spec if spec else "simple"}'
 
-    def generate_start_text(self, level, spec):
+    def generate_start_text(self, level: RS_Levels, spec):
         key = self.build_key(level, spec)
         mentions = []
         names = []
@@ -86,7 +93,7 @@ class Brain:
         with self.lock:
             yield from self.generate_queue_text()
 
-    def in_command(self, user, level, spec):
+    def in_command(self, user: User, level: RS_Levels, spec):
         print(f'command in    {user.id} {user.display_name} {level} {spec}')
         with self.lock:
             key = self.build_key(level, spec)
@@ -104,7 +111,7 @@ class Brain:
             else:
                 yield TextMessage(f'{user.display_name} already in queue for Red Star {level} {spec}')
 
-    def out_level_command(self, user, level, spec):
+    def out_level_command(self, user: User, level: RS_Levels, spec):
         print(f'command out   {user.id} {user.display_name} {level} {spec}')
         with self.lock:
             key = self.build_key(level, spec)
@@ -117,7 +124,7 @@ class Brain:
                 yield TextMessage(f'{user.display_name} leaves queue for Red Star {level} {spec}')
                 yield from self.generate_queue_text()
 
-    def start_command(self, user, level, spec):
+    def start_command(self, user: User, level: RS_Levels, spec):
         print(f'command start {user.id} {user.display_name} {level} {spec}')
         with self.lock:
             key = self.build_key(level, spec)
@@ -132,7 +139,7 @@ class Brain:
                 self.db.save()
                 yield from self.generate_queue_text()
 
-    def out_all_command(self, user):
+    def out_all_command(self, user: User):
         print(f'command out   {user.id} {user.display_name}')
         with self.lock:
             if self.clear_user_from_queue(user.id):

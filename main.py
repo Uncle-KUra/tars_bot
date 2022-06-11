@@ -2,11 +2,11 @@
 import discord
 import argparse
 import json
-import enum
 
-from typing import Literal
+from typing import Optional
 from discord import app_commands
 from user import UserStorage
+from user import User
 from brain import Brain
 from text_db import DB
 from TARSbot import TARSbot
@@ -17,25 +17,20 @@ from parsers import parse_all
 from discord_messages import HelpMessage
 from discord_messages import TextMessage
 
-description = '''Stupid queue bot '''
+from rs_types import RS_Levels
+from rs_types import RedStarModes
+
+DESCRIPTION = '''Stupid queue bot '''
 intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True
 
 db = None
-user_storage = None
-brain = None
-
-RS_Levels = Literal[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+user_storage = UserStorage(None)
+brain = Brain(None, None)
 
 
-class RedStarModes(enum.Enum):
-    none = 0
-    dark = 1
-    duo = 2
-
-
-client = TARSbot(intents=intents, description=description)
+client = TARSbot(intents=intents, description=DESCRIPTION)
 
 
 @client.event
@@ -47,14 +42,18 @@ async def on_ready():
 def process_help(_, command):
     if command.hard:
         yield TextMessage('Was hard but I got it')
-    commands = [{'title': 'Help', 'text': '?help / ?h - print this help'}, {'title': 'Enter a queue',
-                                                                            'text': '?in <level> <mode> - enter queue for specific RS level and mode. \nExample: ?in 4 / ?in 5 dark'},
+    commands = [{'title': 'Help', 'text': '?help / ?h - print this help'},
+                {'title': 'Enter a queue',
+                 'text': '?in <level> <mode> - enter queue for specific RS level and mode. \n'
+                 'Example: ?in 4 / ?in 5 dark'},
                 {'title': 'Enter a queue for dark mode',
                  'text': '?dark <level> - enter queue for specific DRS level. \nExample: ?dark 4'},
                 {'title': 'Leave a queue',
-                 'text': '?out <level> <mode> - leave queue for specific level and mode. \nExample: ?out 3 / ?in 7 duo'},
-                {'title': 'Leave all queues', 'text': '?out - leave all queue'}, {'title': 'Start uncomplete',
-                                                                                  'text': '?start <level> <mode> - start red start for specific level and mode'},
+                 'text': '?out <level> <mode> - leave queue for specific level and mode. \n'
+                 'Example: ?out 3 / ?in 7 duo'},
+                {'title': 'Leave all queues', 'text': '?out - leave all queue'},
+                {'title': 'Start incomplete',
+                 'text': '?start <level> <mode> - start red start for specific level and mode'},
                 {'title': 'Show queues status', 'text': '?status - leave all queue'}]
     yield HelpMessage(commands)
 
@@ -62,37 +61,43 @@ def process_help(_, command):
 def process_full_out(message, command):
     if command.hard:
         yield TextMessage('Was hard but I got it')
-    yield from handle_out(message.author, None, '')
+    user = user_storage.get_user_from_user(message.author)
+    yield from handle_out(user, None, '')
 
 
 def process_level_out(message, command):
     if command.hard:
         yield TextMessage('Was hard but I got it')
-    yield from handle_out(message.author, command.params['level'], command.params.get('mode', ''))
+    user = user_storage.get_user_from_user(message.author)
+    yield from handle_out(user, command.params['level'], command.params.get('mode', ''))
 
 
 def process_level_in(message, command):
     if command.hard:
         yield TextMessage('Was hard but I got it')
-    yield from handle_in(message.author, command.params['level'], command.params.get('mode', ''))
+    user = user_storage.get_user_from_user(message.author)
+    yield from handle_in(user, command.params['level'], command.params.get('mode', ''))
 
 
 def process_level_start(message, command):
     if command.hard:
         yield TextMessage('Was hard but I got it')
-    yield from handle_start(message.author, command.params['level'], command.params.get('mode', ''))
+    user = user_storage.get_user_from_user(message.author)
+    yield from handle_start(user, command.params['level'], command.params.get('mode', ''))
 
 
 def process_level_dark(message, command):
     if command.hard:
         yield TextMessage('Was hard but I got it')
-    yield from handle_in(message.author, command.params['level'], 'dark')
+    user = user_storage.get_user_from_user(message.author)
+    yield from handle_in(user, command.params['level'], 'dark')
 
 
 def process_level_duo(message, command):
     if command.hard:
         yield TextMessage('Was hard but I got it')
-    yield from handle_in(message.author, command.params['level'], 'duo')
+    user = user_storage.get_user_from_user(message.author)
+    yield from handle_in(user, command.params['level'], 'duo')
 
 
 def process_status(_, command):
@@ -198,7 +203,7 @@ async def start_command(ctx, rs_level: RS_Levels, mode: RedStarModes = RedStarMo
         await answer.send(ctx.channel.send)
 
 
-def handle_in(user, level, legacy_mode):
+def handle_in(user: User, level: RS_Levels, legacy_mode):
     print(f'im {level} {legacy_mode} by {user.display_name} ({user.id})')
 
     yield from brain.in_command(user, level, legacy_mode)
@@ -208,13 +213,13 @@ def handle_status():
     yield from brain.status_command()
 
 
-def handle_start(user, level, legacy_mode):
+def handle_start(user: User, level: RS_Levels, legacy_mode):
     print(f'start {level} {legacy_mode} by {user.display_name} ({user.id})')
 
     yield from brain.start_command(user, level, legacy_mode)
 
 
-def handle_out(user: discord.user, level: RS_Levels, mode: str):
+def handle_out(user: User, level: Optional[RS_Levels], mode: str):
     print(f'out {level} {mode} by {user.display_name} ({user.id})')
 
     if level is None:

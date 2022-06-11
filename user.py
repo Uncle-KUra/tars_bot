@@ -2,6 +2,7 @@
 
 import discord
 
+
 class User:
     def __init__(self):
         self.id = None
@@ -27,16 +28,15 @@ class User:
 
 class UserStorage:
     def __init__(self, db):
+        if not db:
+            return
         self.users_data = dict()
         for uid, single_user in db.get_collection('users'):
             self.users_data[int(uid)] = User()
             self.users_data[int(uid)].update_from_dict(single_user)
         self.db = db
 
-    def get_user_from_ctx(self, ctx: discord.Interaction):
-        uid = ctx.user.id
-        display_name = ctx.user.display_name
-        mention = ctx.user.mention
+    def get_user_from_id_others(self, uid, display_name, mention):
         if uid not in self.users_data:
             self.users_data[uid] = User()
         user = self.users_data[uid]
@@ -44,6 +44,18 @@ class UserStorage:
             self.db.set_collection_value('users', uid, user.save_to_json())
             self.db.save()
         return user
+
+    def get_user_from_user(self, user):
+        uid = user.id
+        display_name = user.display_name
+        mention = user.mention
+        return self.get_user_from_id_others(uid, display_name, mention)
+
+    def get_user_from_ctx(self, ctx: discord.Interaction):
+        uid = ctx.user.id
+        display_name = ctx.user.display_name
+        mention = ctx.user.mention
+        return self.get_user_from_id_others(uid, display_name, mention)
 
     def get_from_id(self, uid):
         return self.users_data.get(uid, None)
