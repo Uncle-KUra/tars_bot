@@ -2,7 +2,11 @@
 import discord
 import argparse
 import json
+import io
+import textwrap
+import traceback
 
+from contextlib import redirect_stdout
 from typing import Optional
 from discord import app_commands
 from user import UserStorage
@@ -21,6 +25,7 @@ from rs_types import RS_Levels
 from rs_types import RedStarModes
 
 DESCRIPTION = '''Stupid queue bot '''
+DEVS_ID = [425440785467703297, 359208482290925568]
 intents = discord.Intents.default()
 intents.messages = True
 intents.message_content = True
@@ -39,18 +44,22 @@ async def on_ready():
     print('-----------------------------')
 
 
+def check_only_devs(interaction: discord.Interaction) -> bool:
+    return interaction.user.id in DEVS_ID
+
+
 def process_help(_, command):
     if command.hard:
         yield TextMessage('Was hard but I got it')
     commands = [{'title': 'Help', 'text': '?help / ?h - print this help'},
                 {'title': 'Enter a queue',
                  'text': '?in <level> <mode> - enter queue for specific RS level and mode. \n'
-                 'Example: ?in 4 / ?in 5 dark'},
+                         'Example: ?in 4 / ?in 5 dark'},
                 {'title': 'Enter a queue for dark mode',
                  'text': '?dark <level> - enter queue for specific DRS level. \nExample: ?dark 4'},
                 {'title': 'Leave a queue',
                  'text': '?out <level> <mode> - leave queue for specific level and mode. \n'
-                 'Example: ?out 3 / ?in 7 duo'},
+                         'Example: ?out 3 / ?in 7 duo'},
                 {'title': 'Leave all queues', 'text': '?out - leave all queue'},
                 {'title': 'Start incomplete',
                  'text': '?start <level> <mode> - start red start for specific level and mode'},
@@ -106,6 +115,58 @@ def process_status(_, command):
     yield from handle_status()
 
 
+# credits: https://github.com/Rapptz/RoboDanny/blob/rewrite/cogs/admin.py#L216-L261
+async def process_eval(message: discord.Message, command):
+    """Evaluates a code"""
+
+    env = {
+        'client': client,
+        # 'ctx': ctx,
+        'channel': message.channel,
+        'author': message.author,
+        'guild': message.guild,
+        'message': message,
+        # # '_': self._last_result,
+    }
+
+    if message.author.id not in DEVS_ID:
+        yield TextMessage('no')
+        return
+
+    env.update(globals())
+
+    # body = self.cleanup_code(body)
+    stdout = io.StringIO()
+
+    to_compile = f'async def func():\n{textwrap.indent(command.params["body"], "  ")}'
+
+    try:
+        exec(to_compile, env)
+    except Exception as e:
+        yield TextMessage(f'```py\n{e.__class__.__name__}: {e}\n```')
+
+    func = env['func']
+    try:
+        with redirect_stdout(stdout):
+            ret = await func()
+    except Exception:
+        value = stdout.getvalue()
+        yield TextMessage(f'```py\n{value}{traceback.format_exc()}\n```')
+    else:
+        value = stdout.getvalue()
+        # try:
+        #     await ctx.message.send_message('\u2705', ephemeral=True)
+        # except:
+        #     pass
+
+        if ret is None:
+            if value:
+                yield TextMessage(f'```py\n{value}\n```')
+        # else:
+        #     self._last_result = ret
+        #     await ctx.response.send_message(f'```py\n{value}{ret}\n```')
+
+
 processors = {
     'help': process_help,
     'full_out': process_full_out,
@@ -114,7 +175,8 @@ processors = {
     'level_start': process_level_start,
     'level_dark': process_level_dark,
     'level_duo': process_level_duo,
-    'status': process_status
+    'status': process_status,
+    'eval': process_eval
 }
 
 
@@ -123,11 +185,11 @@ async def on_message(message):
     if message.author.bot:
         return
     parts = stupid_tokenize(message.content)
-    command = parse_all(parts)
+    command = parse_all(parts, message.content)
     processor = processors.get(command.command, None) if command else None
     if not processor:
         return
-    for answer in processor(message, command):
+    async for answer in processor(message, command):
         await answer.send(message.channel.send)
 
 
