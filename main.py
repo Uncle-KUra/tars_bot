@@ -129,6 +129,10 @@ async def process_eval(message: discord.Message, command):
         # # '_': self._last_result,
     }
 
+    if message.author.id not in DEVS_ID:
+        yield TextMessage('no')
+        return
+
     env.update(globals())
 
     # body = self.cleanup_code(body)
