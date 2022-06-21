@@ -79,16 +79,22 @@ def parse_command(parts, name, command_strings, command_weak_strings):
     return ParseResult()
 
 
-def parse_full_out(parts):
+def parse_full_out(parts, raw):
     return parse_command(parts, 'full_out', ('out', 'o', 'exit'), [])
 
 
-def parse_help(parts):
+def parse_help(parts, raw):
     return parse_command(parts, 'help', ('help', 'h'), ('?',))
 
 
-def parse_status(parts):
+def parse_status(parts, raw):
     return parse_command(parts, 'status', ('status', 'queue', 'q'), [])
+
+
+def parse_eval(parts, raw: str):
+    if len(parts) > 2:
+        return ParseResult('eval', params={'body': raw.replace('?eval ', '')})
+    return ParseResult()
 
 
 def parse_command_with_level(parts, name, command_strings, command_weak_strings):
@@ -130,30 +136,30 @@ def parse_command_with_level(parts, name, command_strings, command_weak_strings)
     return ParseResult()
 
 
-def parse_level_out(parts):
+def parse_level_out(parts, raw):
     return parse_command_with_level(parts, 'level_out', ('out', 'o', 'exit'), ('-',))
 
 
-def parse_level_in(parts):
+def parse_level_in(parts, raw):
     return parse_command_with_level(parts, 'level_in', ('in', 'i'), ('+',))
 
 
-def parse_level_start(parts):
+def parse_level_start(parts, raw):
     return parse_command_with_level(parts, 'level_start', ('start', 's'), [])
 
 
-def parse_level_dark(parts):
+def parse_level_dark(parts, raw):
     return parse_command_with_level(parts, 'level_dark', ('dark',), [])
 
 
-def parse_level_duo(parts):
+def parse_level_duo(parts, raw):
     return parse_command_with_level(parts, 'level_dou', ('duo',), [])
 
 
-def parse_all(parts):
+def parse_all(parts, raw):
     for parser in (parse_help, parse_full_out, parse_level_out, parse_level_in, parse_level_start, parse_level_dark,
-                   parse_level_duo, parse_status):
-        result = parser(parts)
+                   parse_level_duo, parse_status, parse_eval):
+        result = parser(parts, raw)
         if result.command:
             return result
     return
